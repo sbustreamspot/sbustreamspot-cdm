@@ -15,10 +15,13 @@ CDM_TYPE_EDGE = 'com.bbn.tc.schema.avro.SimpleEdge'
 CDM_TYPE_EVENT = 'com.bbn.tc.schema.avro.Event'
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', '--input', help='Input CDM/JSON file', required=True)
+parser.add_argument('--url', help='Input filename or Kafka URL', required=True)
+parser.add_argument('--source', help='CDM/Avro from Kafka or CDM/JSON from a file',
+                    choices=['kafka', 'file'], required=True)
 args = vars(parser.parse_args())
 
-input_file = args['input']
+input_url = args['url']
+input_source = args['source']
 
 uuid_to_pid = {}
 uuid_to_pname = {}
@@ -29,7 +32,7 @@ uuid_to_addr = {}
 pid_to_graph_id = {}
 current_graph_id = 0
 
-with open(input_file, 'r') as f:
+with open(input_url, 'r') as f:
     event_metadata_buffer = {} # filled/cleared on every new event
     streamspot_edge = {'event_uuid': None,
                        'source_id': None,

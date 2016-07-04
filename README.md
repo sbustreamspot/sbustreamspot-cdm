@@ -13,7 +13,7 @@
      (requires [avro-utils-1.8.1](http://www.apache.org/dyn/closer.cgi/avro/)):
      `java -jar avro-tools-1.8.1.jar tojson cdm/infoleak_small_units.avro`
    * Convert CDM/JSON to StreamSpot edges:
-     `python translate_cdm_to_streamspot.py -i json/infoleak_small_units.json`
+     `python translate_cdm_to_streamspot.py --url json/infoleak_small_units.json  --source file`
    * Convert CDM/Avro to StreamSpot edges: `TODO`
    * Run as a service consuming CDM/Avro from Kafka: `TODO`
 
