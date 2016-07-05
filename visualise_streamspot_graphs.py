@@ -75,8 +75,8 @@ with open(input_file, 'r') as f:
         if edge_type == 'EVENT_UNIT':
             continue
 
-        #if edge_type == 'EVENT_EXECUTE':
-        #    continue # do not add this edge
+        if edge_type == 'EVENT_EXECUTE':
+            continue # do not add this edge: it's a self-loop
 
         if not graph_id in graphs:
             graphs[graph_id] = create_new_graph()
@@ -112,14 +112,15 @@ with open(input_file, 'r') as f:
             
             g.vp.id[v] = dest_id
             g.vp.type[v] = dest_type
-            g.vp.label[v] = dest_id + '\\' + dest_name
+            g.vp.label[v] = dest_name
             g.vp.group[v] = group_map[dest_type]
             
             if dest_type == 'SUBJECT_PROCESS':
                 g.vp.color[v] = process_color
             elif dest_type == 'OBJECT_FILE':
                 g.vp.color[v] = file_color
-                g.vp.label[v] = dest_id.split('/')[-1]
+                g.vp.label[v] = dest_name.split('/')[-1]
+                #g.vp.label[v] = dest_name
             elif dest_type == 'OBJECT_MEM':
                 g.vp.color[v] = mem_color
             elif dest_type == 'OBJECT_SOCK':

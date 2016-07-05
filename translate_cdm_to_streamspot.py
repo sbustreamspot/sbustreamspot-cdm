@@ -26,6 +26,27 @@ uuid_to_addr = {}
 pid_to_graph_id = {}
 current_graph_id = 0
 
+filename_to_dest_id = {}
+current_dest_id = 0
+
+def print_streamspot_edge(streamspot_edge, concise):
+    if not concise:
+        print str(streamspot_edge['source_id']) + '\t' +\
+              str(streamspot_edge['source_name']) + '\t' +\
+              str(streamspot_edge['source_type']) + '\t' +\
+              str(streamspot_edge['dest_id']) + '\t' +\
+              str(streamspot_edge['dest_name']) + '\t' +\
+              str(streamspot_edge['dest_type']) + '\t' +\
+              str(streamspot_edge['edge_type']) + '\t' +\
+              str(streamspot_edge['graph_id'])
+    else:
+        print str(streamspot_edge['source_id']) + '\t' +\
+              type_map[streamspot_edge['source_type']] + '\t' +\
+              str(streamspot_edge['dest_id']) + '\t' +\
+              type_map[streamspot_edge['dest_type']] + '\t' +\
+              type_map[streamspot_edge['edge_type']] + '\t' +\
+              str(streamspot_edge['graph_id'])
+
 with open(input_url, 'r') as f:
     event_metadata_buffer = {} # filled/cleared on every new event
     streamspot_edge = {'event_uuid': None,
@@ -45,8 +66,6 @@ with open(input_url, 'r') as f:
         cdm_record = json.loads(line)
         cdm_record_type = cdm_record['datum'].keys()[0]
         cdm_record_values = cdm_record['datum'][cdm_record_type]
-
-        #print cdm_record
 
         if cdm_record_type == CDM_TYPE_PRINCIPAL:
             continue # we don't care about principals
@@ -75,17 +94,27 @@ with open(input_url, 'r') as f:
 
         elif cdm_record_type == CDM_TYPE_FILE:
             uuid = cdm_record_values['uuid']
-            url = cdm_record_values['url']              # destination ID
+            url = cdm_record_values['url']
             uuid_to_url[uuid] = url
+            
+            if not url in filename_to_dest_id:
+                filename_to_dest_id[url] = current_dest_id
+                while current_dest_id in filename_to_dest_id.values():
+                    current_dest_id += 1
 
         elif cdm_record_type == CDM_TYPE_SOCK:
             uuid = cdm_record_values['uuid']
-            
+
             src = cdm_record_values['srcAddress']
             dest = cdm_record_values['destAddress']
             src_port = cdm_record_values['srcPort']
             dest_port =  cdm_record_values['destPort']
             sock_id = src + ':' + str(src_port) + ':' + dest + ':' + str(dest_port)
+
+            if not sock_id in filename_to_dest_id:
+                filename_to_dest_id[sock_id] = current_dest_id
+                while current_dest_id in filename_to_dest_id.values():
+                    current_dest_id += 1
 
             uuid_to_sockid[uuid] = sock_id
 
@@ -97,14 +126,7 @@ with open(input_url, 'r') as f:
         elif cdm_record_type == CDM_TYPE_EVENT:
             # print previous streamspot edge if it is ready
             if not None in streamspot_edge.values():
-                print str(streamspot_edge['source_id']) + '\t' +\
-                      str(streamspot_edge['source_name']) + '\t' +\
-                      str(streamspot_edge['source_type']) + '\t' +\
-                      str(streamspot_edge['dest_id']) + '\t' +\
-                      str(streamspot_edge['dest_name']) + '\t' +\
-                      str(streamspot_edge['dest_type']) + '\t' +\
-                      str(streamspot_edge['edge_type']) + '\t' +\
-                      str(streamspot_edge['graph_id'])
+                print_streamspot_edge(streamspot_edge, args['concise'])
 
                 # clear old edge data
                 streamspot_edge = {'event_uuid': None,
@@ -138,21 +160,30 @@ with open(input_url, 'r') as f:
                             streamspot_edge['event_uuid']
                     from_uuid = cdm_record_values['fromUuid']
                     url = uuid_to_url[from_uuid]
-                    streamspot_edge['dest_id'] = url
+                    dest_id = filename_to_dest_id[url]
+
+                    streamspot_edge['dest_id'] = dest_id
+                    streamspot_edge['dest_name'] = url
                     streamspot_edge['dest_type'] = 'OBJECT_FILE'
                 else:
                     assert cdm_record_values['fromUuid'] == \
                             streamspot_edge['event_uuid']
                     to_uuid = cdm_record_values['toUuid']
                     url = uuid_to_url[to_uuid]
-                    streamspot_edge['dest_id'] = url
+                    dest_id = filename_to_dest_id[url]
+                    
+                    streamspot_edge['dest_id'] = dest_id
+                    streamspot_edge['dest_name'] = url
                     streamspot_edge['dest_type'] = 'OBJECT_FILE'
             elif type == 'EDGE_EVENT_AFFECTS_FILE':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
 
                 to_uuid = cdm_record_values['toUuid']
                 url = uuid_to_url[to_uuid]
-                streamspot_edge['dest_id'] = url
+                dest_id = filename_to_dest_id[url]
+                
+                streamspot_edge['dest_id'] = dest_id
+                streamspot_edge['dest_name'] = url
                 streamspot_edge['dest_type'] = 'OBJECT_FILE'
             elif type == 'EDGE_MEMORY_AFFECTS_EVENT':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
@@ -160,6 +191,7 @@ with open(input_url, 'r') as f:
                 to_uuid = cdm_record_values['toUuid']
                 addr = uuid_to_addr[to_uuid]
                 streamspot_edge['dest_id'] = addr
+                streamspot_edge['dest_name'] = addr
                 streamspot_edge['dest_type'] = 'OBJECT_MEM'
             elif type == 'EDGE_EVENT_AFFECTS_MEMORY':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
@@ -167,13 +199,17 @@ with open(input_url, 'r') as f:
                 to_uuid = cdm_record_values['toUuid']
                 addr = uuid_to_addr[to_uuid]
                 streamspot_edge['dest_id'] = addr
+                streamspot_edge['dest_name'] = addr
                 streamspot_edge['dest_type'] = 'OBJECT_MEM'
             elif type == 'EDGE_EVENT_AFFECTS_NETFLOW':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
 
                 to_uuid = cdm_record_values['toUuid']
                 sock_id = uuid_to_sockid[to_uuid]
-                streamspot_edge['dest_id'] = sock_id
+                dest_id = filename_to_dest_id[sock_id]
+
+                streamspot_edge['dest_id'] = dest_id 
+                streamspot_edge['dest_name'] = sock_id
                 streamspot_edge['dest_type'] = 'OBJECT_SOCK'
             elif type == 'EDGE_EVENT_AFFECTS_SUBJECT' or \
                     type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
@@ -213,11 +249,4 @@ with open(input_url, 'r') as f:
 
     
     # last event in buffer
-    print str(streamspot_edge['source_id']) + '\t' +\
-          str(streamspot_edge['source_name']) + '\t' +\
-          str(streamspot_edge['source_type']) + '\t' +\
-          str(streamspot_edge['dest_id']) + '\t' +\
-          str(streamspot_edge['dest_name']) + '\t' +\
-          str(streamspot_edge['dest_type']) + '\t' +\
-          str(streamspot_edge['edge_type']) + '\t' +\
-          str(streamspot_edge['graph_id'])
+    print_streamspot_edge(streamspot_edge, args['concise'])
