@@ -4,20 +4,14 @@ import argparse
 import json
 import pdb
 import sys
-
-# CDM record type constants
-CDM_TYPE_PRINCIPAL = 'com.bbn.tc.schema.avro.Principal'
-CDM_TYPE_SUBJECT = 'com.bbn.tc.schema.avro.Subject'
-CDM_TYPE_FILE = 'com.bbn.tc.schema.avro.FileObject'
-CDM_TYPE_MEM = 'com.bbn.tc.schema.avro.MemoryObject'
-CDM_TYPE_SOCK = 'com.bbn.tc.schema.avro.NetFlowObject'
-CDM_TYPE_EDGE = 'com.bbn.tc.schema.avro.SimpleEdge'
-CDM_TYPE_EVENT = 'com.bbn.tc.schema.avro.Event'
+from constants import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--url', help='Input filename or Kafka URL', required=True)
 parser.add_argument('--source', help='CDM/Avro from Kafka or CDM/JSON from a file',
                     choices=['kafka', 'file'], required=True)
+parser.add_argument('--concise', help='Single-byte types, needed by StreamSpot',
+                    required=False, action='store_true')
 args = vars(parser.parse_args())
 
 input_url = args['url']
@@ -145,42 +139,42 @@ with open(input_url, 'r') as f:
                     from_uuid = cdm_record_values['fromUuid']
                     url = uuid_to_url[from_uuid]
                     streamspot_edge['dest_id'] = url
-                    streamspot_edge['dest_type'] = 'FILE'
+                    streamspot_edge['dest_type'] = 'OBJECT_FILE'
                 else:
                     assert cdm_record_values['fromUuid'] == \
                             streamspot_edge['event_uuid']
                     to_uuid = cdm_record_values['toUuid']
                     url = uuid_to_url[to_uuid]
                     streamspot_edge['dest_id'] = url
-                    streamspot_edge['dest_type'] = 'FILE'
+                    streamspot_edge['dest_type'] = 'OBJECT_FILE'
             elif type == 'EDGE_EVENT_AFFECTS_FILE':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
 
                 to_uuid = cdm_record_values['toUuid']
                 url = uuid_to_url[to_uuid]
                 streamspot_edge['dest_id'] = url
-                streamspot_edge['dest_type'] = 'FILE'
+                streamspot_edge['dest_type'] = 'OBJECT_FILE'
             elif type == 'EDGE_MEMORY_AFFECTS_EVENT':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
 
                 to_uuid = cdm_record_values['toUuid']
                 addr = uuid_to_addr[to_uuid]
                 streamspot_edge['dest_id'] = addr
-                streamspot_edge['dest_type'] = 'MEM'
+                streamspot_edge['dest_type'] = 'OBJECT_MEM'
             elif type == 'EDGE_EVENT_AFFECTS_MEMORY':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
 
                 to_uuid = cdm_record_values['toUuid']
                 addr = uuid_to_addr[to_uuid]
                 streamspot_edge['dest_id'] = addr
-                streamspot_edge['dest_type'] = 'MEM'
+                streamspot_edge['dest_type'] = 'OBJECT_MEM'
             elif type == 'EDGE_EVENT_AFFECTS_NETFLOW':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
 
                 to_uuid = cdm_record_values['toUuid']
                 sock_id = uuid_to_sockid[to_uuid]
                 streamspot_edge['dest_id'] = sock_id
-                streamspot_edge['dest_type'] = 'SOCK'
+                streamspot_edge['dest_type'] = 'OBJECT_SOCK'
             elif type == 'EDGE_EVENT_AFFECTS_SUBJECT' or \
                     type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
                 assert cdm_record_values['fromUuid'] == streamspot_edge['event_uuid']
@@ -192,11 +186,11 @@ with open(input_url, 'r') as f:
                 if type == 'EDGE_EVENT_AFFECTS_SUBJECT':
                     streamspot_edge['dest_id'] = pid 
                     streamspot_edge['dest_name'] = pname
-                    streamspot_edge['dest_type'] = 'PROCESS'
+                    streamspot_edge['dest_type'] = 'SUBJECT_PROCESS'
                 elif type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
                     streamspot_edge['source_id'] = pid
                     streamspot_edge['source_name'] = pname
-                    streamspot_edge['source_type'] = 'PROCESS'
+                    streamspot_edge['source_type'] = 'SUBJECT_PROCESS'
 
                 # graph ID assignment to streamspot edge
                 if type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':

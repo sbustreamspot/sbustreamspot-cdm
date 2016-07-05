@@ -20,10 +20,10 @@ file_color = [251/256.,180/256.,174/256.,0.8]
 mem_color = [204/256.,235/256.,197/256.,0.8]
 sock_color = [222/256.,203/256.,228/256.,0.8]
 
-group_map = {'PROCESS': 0,
-             'FILE': 1,
-             'MEM': 2,
-             'SOCK': 3}
+group_map = {'SUBJECT_PROCESS': 0,
+             'OBJECT_FILE': 1,
+             'OBJECT_SOCK': 2,
+             'OBJECT_MEM': 3}
 
 def create_new_graph():
     g = Graph()
@@ -92,13 +92,13 @@ with open(input_file, 'r') as f:
             g.vp.label[u] = source_id + '\\' + source_name
             g.vp.group[u] = group_map[source_type]
            
-            if source_type == 'PROCESS':
+            if source_type == 'SUBJECT_PROCESS':
                 g.vp.color[u] = process_color
-            elif source_type == 'FILE':
+            elif source_type == 'OBJECT_FILE':
                 g.vp.color[u] = file_color
-            elif source_type == 'MEM':
+            elif source_type == 'OBJECT_MEM':
                 g.vp.color[u] = mem_color
-            elif source_type == 'SOCK':
+            elif source_type == 'OBJECT_SOCK':
                 g.vp.color[u] = sock_color
             else:
                 print 'unknown type', source_type
@@ -115,14 +115,14 @@ with open(input_file, 'r') as f:
             g.vp.label[v] = dest_id + '\\' + dest_name
             g.vp.group[v] = group_map[dest_type]
             
-            if dest_type == 'PROCESS':
+            if dest_type == 'SUBJECT_PROCESS':
                 g.vp.color[v] = process_color
-            elif dest_type == 'FILE':
+            elif dest_type == 'OBJECT_FILE':
                 g.vp.color[v] = file_color
                 g.vp.label[v] = dest_id.split('/')[-1]
-            elif dest_type == 'MEM':
+            elif dest_type == 'OBJECT_MEM':
                 g.vp.color[v] = mem_color
-            elif dest_type == 'SOCK':
+            elif dest_type == 'OBJECT_SOCK':
                 g.vp.color[v] = sock_color
             else:
                 print 'unknown type', source_type
