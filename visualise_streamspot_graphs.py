@@ -7,6 +7,7 @@
 
 import argparse
 from graph_tool.all import *
+import pdb
 import sys
 
 parser = argparse.ArgumentParser()
@@ -19,11 +20,13 @@ process_color = [179/256.,205/256.,227/256.,0.8]
 file_color = [251/256.,180/256.,174/256.,0.8]
 mem_color = [204/256.,235/256.,197/256.,0.8]
 sock_color = [222/256.,203/256.,228/256.,0.8]
+srcsink_color = [0.,0.,0.,0.8]
 
 group_map = {'SUBJECT_PROCESS': 0,
              'OBJECT_FILE': 1,
              'OBJECT_SOCK': 2,
-             'OBJECT_MEM': 3}
+             'OBJECT_MEM': 3,
+             'OBJECT_SRCSINK': 4}
 
 def create_new_graph():
     g = Graph()
@@ -100,6 +103,8 @@ with open(input_file, 'r') as f:
                 g.vp.color[u] = mem_color
             elif source_type == 'OBJECT_SOCK':
                 g.vp.color[u] = sock_color
+            elif source_type == 'OBJECT_SRCSINK':
+                g.vp.color[u] = srcsink_color
             else:
                 print 'unknown type', source_type
         else:
@@ -125,19 +130,21 @@ with open(input_file, 'r') as f:
                 g.vp.color[v] = mem_color
             elif dest_type == 'OBJECT_SOCK':
                 g.vp.color[v] = sock_color
+            elif dest_type == 'OBJECT_SRCSINK':
+                g.vp.color[v] = srcsink_color
             else:
-                print 'unknown type', source_type
+                print 'unknown type', dest_type
         else:
             v = matches[0]
 
         e = g.add_edge(u,v)
         g.ep.type[e] = edge_type
-        g.ep.label[e] = str(lno) + ':' + edge_type.split('_')[1]
+        g.ep.label[e] = str(lno) + ':' + edge_type.split('_')[-1]
 
-        if edge_type in ['EVENT_EXECUTE', 'EVENT_CLONE']:
+        if edge_type in ['EVENT_EXECUTE', 'EVENT_CLONE', 'EVENT_FORK']:
             g.ep.color[e] = process_color
         elif edge_type in ['EVENT_OPEN', 'EVENT_READ', 'EVENT_WRITE',
-                           'EVENT_UPDATE']:
+                           'EVENT_UPDATE', 'EVENT_RENAME', 'EVENT_CREATE_OBJECT']:
             g.ep.color[e] = file_color
         elif edge_type in ['EVENT_BIND', 'EVENT_ACCEPT', 'EVENT_CONNECT']:
             g.ep.color[e] = sock_color
@@ -151,6 +158,7 @@ for graph_id, g in graphs.iteritems():
                vertex_shape='circle',
                #vertex_size=5.0,
                vertex_color=g.vp.color,
+               edge_color=g.ep.color,
                vertex_fill_color=[1.0,1.0,1.0,0.8],
                vertex_pen_width=5.0, 
                edge_pen_width=5.0,

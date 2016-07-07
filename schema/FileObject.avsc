@@ -1,0 +1,74 @@
+{
+  "type" : "record",
+  "name" : "FileObject",
+  "namespace" : "com.bbn.tc.schema.avro",
+  "doc" : "* Represents a file on the file system. Instantiates an AbstractObject.",
+  "fields" : [ {
+    "name" : "uuid",
+    "type" : {
+      "type" : "fixed",
+      "name" : "UUID",
+      "size" : 16
+    },
+    "doc" : "Universally unique identifier for the object"
+  }, {
+    "name" : "baseObject",
+    "type" : {
+      "type" : "record",
+      "name" : "AbstractObject",
+      "doc" : "*  Objects, in general, represent data sources and sinks which could include sockets, files,\n     *  memory, and any data in general that can be an input and/or output to an event.\n     *  This record is intended to be abstract i.e., one should not instantiate an Object\n     *  but rather instantiate one of its sub types File, NetFlow, of Memory",
+      "fields" : [ {
+        "name" : "source",
+        "type" : {
+          "type" : "enum",
+          "name" : "InstrumentationSource",
+          "doc" : "* SOURCE_LINUX_AUDIT_TRACE,          from Linux /dev/audit\n     * SOURCE_LINUX_PROC_TRACE,           from Linux's /proc\n     * SOURCE_LINUX_BEEP_TRACE,           from BEEP instrumentation\n     * SOURCE_FREEBSD_OPENBSM_TRACE,      from FreeBSD openBSM\n     * SOURCE_ANDROID_JAVA_CLEARSCOPE,    from android java instrumentation\n     * SOURCE_ANDROID_NATIVE_CLEARSCOPE,  from android's native instrumentation\n     * SOURCE_FREEBSD_DTRACE_CADETS, SOURCE_FREEBSD_TESLA_CADETS  for CADETS freebsd instrumentation\n     * SOURCE_FREEBSD_LOOM_CADETS, SOURCE_FREEBSD_MACIF_CADETS    for CADETS freebsd instrumentation\n     * SOURCE_LINUX_THEIA                 from the GATech THEIA instrumentation source\n     * SOURCE_WINDOWS_FIVEDIRECTIONS      for the fivedirections windows events",
+          "symbols" : [ "SOURCE_LINUX_AUDIT_TRACE", "SOURCE_LINUX_PROC_TRACE", "SOURCE_LINUX_BEEP_TRACE", "SOURCE_FREEBSD_OPENBSM_TRACE", "SOURCE_ANDROID_JAVA_CLEARSCOPE", "SOURCE_ANDROID_NATIVE_CLEARSCOPE", "SOURCE_FREEBSD_DTRACE_CADETS", "SOURCE_FREEBSD_TESLA_CADETS", "SOURCE_FREEBSD_LOOM_CADETS", "SOURCE_FREEBSD_MACIF_CADETS", "SOURCE_WINDOWS_DIFT_FAROS", "SOURCE_LINUX_THEIA", "SOURCE_WINDOWS_FIVEDIRECTIONS" ]
+        },
+        "doc" : "The source that emitted the object, see InstrumentationSource"
+      }, {
+        "name" : "permission",
+        "type" : [ "null", {
+          "type" : "fixed",
+          "name" : "SHORT",
+          "size" : 2
+        } ],
+        "doc" : "Permission bits defined over the object (Optional)",
+        "default" : null
+      }, {
+        "name" : "lastTimestampMicros",
+        "type" : [ "null", "long" ],
+        "doc" : "* The timestamp when the object was last modified (Optional).\n        * A timestamp stores the number of microseconds from the unix epoch, 1 January 1970 00:00:00.000000 UTC.",
+        "default" : null
+      }, {
+        "name" : "properties",
+        "type" : [ "null", {
+          "type" : "map",
+          "values" : "string"
+        } ],
+        "doc" : "Arbitrary key, value pairs describing the entity",
+        "default" : null
+      } ]
+    },
+    "doc" : "The base object attributes"
+  }, {
+    "name" : "url",
+    "type" : "string",
+    "doc" : "The location of the file absolute path or remote url"
+  }, {
+    "name" : "isPipe",
+    "type" : "boolean",
+    "doc" : "Whether the file is a Unix pipe",
+    "default" : false
+  }, {
+    "name" : "version",
+    "type" : "int",
+    "doc" : "The file version incremented every time the file changes",
+    "default" : 1
+  }, {
+    "name" : "size",
+    "type" : [ "null", "long" ],
+    "doc" : "The file size in bytes (Optional)",
+    "default" : null
+  } ]
+}
