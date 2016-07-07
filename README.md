@@ -21,6 +21,11 @@
    * Activate environment: `source env/bin/activate`
    * Install dependencies: `pip install -r requirements.txt`
 
+If installing requirements fails on `tc-bbn-py`, try:
+```
+pip install git+https://git.tc.bbn.com/bbn/ta3-api-bindings-python.git
+```
+
 ### CDM-StreamSpot Translation
 
    * Convert CDM/Avro to CDM/JSON for local testing:
