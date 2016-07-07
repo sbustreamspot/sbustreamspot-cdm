@@ -1,0 +1,51 @@
+{
+  "type" : "record",
+  "name" : "ProvenanceTagNode",
+  "namespace" : "com.bbn.tc.schema.avro",
+  "doc" : "* A provenance tag defines source dependence on specific data sources (inputs).\n     * A tag identifier is typically bound to a source and used by the tracking system to\n     * capture dependence on this source input.\n     * A provenance tag is represented as a tree. Each node in the tree has a value and\n     * a set of children nodes.",
+  "fields" : [ {
+    "name" : "value",
+    "type" : [ "int", {
+      "type" : "fixed",
+      "name" : "UUID",
+      "size" : 32
+    }, {
+      "type" : "enum",
+      "name" : "TagOpCode",
+      "doc" : "* The tag opcode describes the provenance relation i.e., how multiple sources are combined to\n     * produce the output. We identify the following provenance relations\n     *\n     *   TAG_OP_SEQUENCE       the output is derived from the specified inputs in order, sequentially\n     *   TAG_OP_UNION,         the output is the union of its inputs\n     *   TAG_OP_ENCODE         the output is some encoding of the input\n     *   TAG_OP_STRONG         this is more qualitative (coarse) saying there is strong dependence\n     *   TAG_OP_MEDIUM         this is more qualitative (coarse) saying there is medium dependence\n     *   TAG_OP_WEAK           this is more qualitative (coarse) saying there is weak   dependence",
+      "symbols" : [ "TAG_OP_SEQUENCE", "TAG_OP_UNION", "TAG_OP_ENCODE", "TAG_OP_STRONG", "TAG_OP_MEDIUM", "TAG_OP_WEAK" ]
+    }, {
+      "type" : "enum",
+      "name" : "IntegrityTag",
+      "doc" : "* The integrity tag may be used to specify the initial integrity of an entity,\n     * or to endorse its content after performing appropriate checking/sanitization.",
+      "symbols" : [ "INTEGRITY_UNTRUSTED", "INTEGRITY_BENIGN", "INTEGRITY_INVULNERABLE" ]
+    }, {
+      "type" : "enum",
+      "name" : "ConfidentialityTag",
+      "doc" : "* The confidentiality tag may be used to specify the initial confidentiality of an entity,\n     * or to declassify its content after performing appropriate checking/sanitization.",
+      "symbols" : [ "CONFIDENTIALITY_SECRET", "CONFIDENTIALITY_SENSITIVE", "CONFIDENTIALITY_PRIVATE", "CONFIDENTIALITY_PUBLIC" ]
+    } ],
+    "doc" : "*  the value of the node: can have the following types\n         *   int                 references another node by tagId\n         *   UUID                object uuid (source or sink for example)\n         *   TaOpCode            the opcode applied to the children nodes, see TaOpCode\n         *   IntegrityTag        an integrity tag\n         *   ConfidentialityTag  a confidentiality tag"
+  }, {
+    "name" : "children",
+    "type" : [ "null", {
+      "type" : "array",
+      "items" : "ProvenanceTagNode"
+    } ],
+    "doc" : "the child nodes",
+    "default" : null
+  }, {
+    "name" : "tagId",
+    "type" : [ "null", "int" ],
+    "doc" : "* the id to be assigned to this tag node\n         * typically set once when the node is first created, and used in value afterwards",
+    "default" : null
+  }, {
+    "name" : "properties",
+    "type" : [ "null", {
+      "type" : "map",
+      "values" : "string"
+    } ],
+    "doc" : "Arbitrary key, value pairs associated with a tag node",
+    "default" : null
+  } ]
+}

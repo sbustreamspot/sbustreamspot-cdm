@@ -1,0 +1,7 @@
+{
+  "type" : "enum",
+  "name" : "LocalAuthType",
+  "namespace" : "com.bbn.tc.schema.avro",
+  "doc" : "* The local authentication types\n     * TODO: see Principal, currently this is not used",
+  "symbols" : [ "LOCALAUTH_NONE", "LOCALAUTH_PASSWORD", "LOCALAUTH_PUBLIC_KEY", "LOCALAUTH_ONE_TIME_PASSWORD" ]
+}

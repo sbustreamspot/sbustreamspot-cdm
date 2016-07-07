@@ -1,0 +1,6 @@
+{
+  "type" : "fixed",
+  "name" : "UUID",
+  "namespace" : "com.bbn.tc.schema.avro",
+  "size" : 32
+}

@@ -2,6 +2,7 @@
 
 # Based on CDM 12
 # Schema: https://git.tc.bbn.com/bbn/ta3-serialization-schema/blob/master/avro/CDM12.avdl
+SCHEMA_FILE = 'schema/TCCDMDatum.avsc'
 
 # CDM record type constants
 CDM_TYPE_PRINCIPAL = 'com.bbn.tc.schema.avro.Principal'

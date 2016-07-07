@@ -1,0 +1,53 @@
+{
+  "type" : "record",
+  "name" : "Principal",
+  "namespace" : "com.bbn.tc.schema.avro",
+  "doc" : "* A principal is a local user\n    * TODO: extend for second evaluation to include remote principals\n    * TODO: what happens when the user information changes (are we tracking versions?)\n    * TODO: Authentication mechanisms: are TA1s providing that information and how?",
+  "fields" : [ {
+    "name" : "uuid",
+    "type" : {
+      "type" : "fixed",
+      "name" : "UUID",
+      "size" : 32
+    },
+    "doc" : "A unique id for the principal"
+  }, {
+    "name" : "type",
+    "type" : {
+      "type" : "enum",
+      "name" : "PrincipalType",
+      "doc" : "* The type of principal may be local to the host, or remote users/systems.",
+      "symbols" : [ "PRINCIPAL_LOCAL", "PRINCIPAL_REMOTE" ]
+    },
+    "doc" : "The type of the principal, local by default",
+    "default" : "PRINCIPAL_LOCAL"
+  }, {
+    "name" : "userId",
+    "type" : "int",
+    "doc" : "The operating system id associated with the user"
+  }, {
+    "name" : "groupIds",
+    "type" : {
+      "type" : "array",
+      "items" : "int"
+    },
+    "doc" : "The ids of the groups which this user is part of"
+  }, {
+    "name" : "source",
+    "type" : {
+      "type" : "enum",
+      "name" : "InstrumentationSource",
+      "doc" : "* SOURCE_LINUX_AUDIT_TRACE,          from Linux /dev/audit\n     * SOURCE_LINUX_PROC_TRACE,           from Linux's /proc\n     * SOURCE_LINUX_BEEP_TRACE,           from BEEP instrumentation\n     * SOURCE_FREEBSD_OPENBSM_TRACE,      from FreeBSD openBSM\n     * SOURCE_ANDROID_JAVA_CLEARSCOPE,    from android java instrumentation\n     * SOURCE_ANDROID_NATIVE_CLEARSCOPE,  from android's native instrumentation\n     * SOURCE_FREEBSD_DTRACE_CADETS, SOURCE_FREEBSD_TESLA_CADETS  for CADETS freebsd instrumentation\n     * SOURCE_FREEBSD_LOOM_CADETS, SOURCE_FREEBSD_MACIF_CADETS    for CADETS freebsd instrumentation\n     * SOURCE_LINUX_THEIA                 from the GATech THEIA instrumentation source\n     *",
+      "symbols" : [ "SOURCE_LINUX_AUDIT_TRACE", "SOURCE_LINUX_PROC_TRACE", "SOURCE_LINUX_BEEP_TRACE", "SOURCE_FREEBSD_OPENBSM_TRACE", "SOURCE_ANDROID_JAVA_CLEARSCOPE", "SOURCE_ANDROID_NATIVE_CLEARSCOPE", "SOURCE_FREEBSD_DTRACE_CADETS", "SOURCE_FREEBSD_TESLA_CADETS", "SOURCE_FREEBSD_LOOM_CADETS", "SOURCE_FREEBSD_MACIF_CADETS", "SOURCE_WINDOWS_DIFT_FAROS", "SOURCE_LINUX_THEIA" ]
+    },
+    "doc" : "The source that emitted the Principal record, see InstrumentationSource"
+  }, {
+    "name" : "properties",
+    "type" : [ "null", {
+      "type" : "map",
+      "values" : "string"
+    } ],
+    "doc" : "Arbitrary key, value pairs describing the entity",
+    "default" : null
+  } ]
+}
