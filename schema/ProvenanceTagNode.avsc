@@ -8,7 +8,7 @@
     "type" : [ "int", {
       "type" : "fixed",
       "name" : "UUID",
-      "size" : 32
+      "size" : 16
     }, {
       "type" : "enum",
       "name" : "TagOpCode",

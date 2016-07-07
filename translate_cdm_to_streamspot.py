@@ -107,7 +107,16 @@ if input_source == 'file':
             #print lineno, cdm_record_type, cdm_record
 
             if cdm_record_type == CDM_TYPE_PRINCIPAL:
-                continue # we don't care about principals
+                continue # we don't care about PRINCIPALs
+
+            elif cdm_record_type == CDM_TYPE_SRCSINK:
+                # treat this like a file with filename UUID
+                uuid = read_field(cdm_record_values['uuid'], input_format)
+
+                if not uuid in filename_to_dest_id:
+                    filename_to_dest_id[uuid] = current_dest_id
+                    while current_dest_id in filename_to_dest_id.values():
+                        current_dest_id += 1
 
             elif cdm_record_type == CDM_TYPE_SUBJECT:
                 uuid = read_field(cdm_record_values['uuid'], input_format)
@@ -117,11 +126,11 @@ if input_source == 'file':
                     ppid = read_field(cdm_record_values['ppid'], input_format)
 
                     if input_format == 'avro':
-                        pname = read_field(cdm_record_values['properties']['programName'],
+                        pname = read_field(cdm_record_values['properties']['name'],
                                           input_format)
                         unitid = read_field(cdm_record_values['unitId'], input_format)
                     elif input_format == 'json':
-                        pname = read_field(cdm_record_values['properties']['map']['programName'],
+                        pname = read_field(cdm_record_values['properties']['map']['name'],
                                           input_format)
                         unitid = read_field(cdm_record_values['unitId']['int'],
                                            input_format)
@@ -197,6 +206,8 @@ if input_source == 'file':
                 edge_type = read_field(cdm_record_values['type'], input_format)
                 if edge_type == 'EDGE_SUBJECT_HASLOCALPRINCIPAL':
                     pass
+                elif edge_type == 'EDGE_OBJECT_PREV_VERSION':
+                    pass
                 elif edge_type == 'EDGE_FILE_AFFECTS_EVENT':
                     # HACK! FIXME
                     # Special case for
@@ -271,6 +282,28 @@ if input_source == 'file':
                     streamspot_edge['dest_id'] = dest_id
                     streamspot_edge['dest_name'] = sock_id
                     streamspot_edge['dest_type'] = 'OBJECT_SOCK'
+                elif edge_type == 'EDGE_EVENT_AFFECTS_SRCSINK':
+                    assert read_field(cdm_record_values['fromUuid'],
+                                    input_format) ==\
+                           streamspot_edge['event_uuid']
+
+                    to_uuid = read_field(cdm_record_values['toUuid'], input_format)
+                    dest_id = filename_to_dest_id[to_uuid]
+
+                    streamspot_edge['dest_id'] = dest_id
+                    streamspot_edge['dest_name'] = dest_id
+                    streamspot_edge['dest_type'] = 'OBJECT_SRCSINK'
+                elif edge_type == 'EDGE_SRCSINK_AFFECTS_EVENT':
+                    assert read_field(cdm_record_values['fromUuid'],
+                                    input_format) ==\
+                           streamspot_edge['event_uuid']
+
+                    to_uuid = read_field(cdm_record_values['toUuid'], input_format)
+                    dest_id = filename_to_dest_id[to_uuid]
+
+                    streamspot_edge['dest_id'] = dest_id
+                    streamspot_edge['dest_name'] = dest_id
+                    streamspot_edge['dest_type'] = 'OBJECT_SRCSINK'
                 elif edge_type == 'EDGE_EVENT_AFFECTS_SUBJECT' or \
                         edge_type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
                     assert read_field(cdm_record_values['fromUuid'],

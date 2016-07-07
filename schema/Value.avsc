@@ -32,6 +32,11 @@
     "doc" : "Whether this value is null, needed to indicate null objects (default: false)",
     "default" : false
   }, {
+    "name" : "name",
+    "type" : [ "null", "string" ],
+    "doc" : "the name of the Value, string. (Optional)",
+    "default" : null
+  }, {
     "name" : "runtimeDataType",
     "type" : [ "null", "string" ],
     "doc" : "The runtime data type of the value (Optional); For example, an object of dataType=COMPLEX, can have\n         *  a runtime data type of say \"MyClass\"",

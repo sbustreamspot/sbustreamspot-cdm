@@ -25,15 +25,13 @@
 
    * Convert CDM/Avro to CDM/JSON for local testing:
      (requires [avro-utils-1.8.1](http://www.apache.org/dyn/closer.cgi/avro/)):
-     `java -jar avro-tools-1.8.1.jar tojson avro/infoleak_small_units.CDM12.avro`
+     `java -jar avro-tools-1.8.1.jar tojson avro/infoleak_small_units.CDM13.avro`
 
    * Convert CDM/JSON in a file to StreamSpot edges on standard output:
-     `python translate_cdm_to_streamspot.py --url json/infoleak_small_units.CDM12.json
-      --format json --source file`
+     `python translate_cdm_to_streamspot.py --url json/infoleak_small_units.CDM13.json --format json --source file`
 
    * Convert CDM/Avro in a file to StreamSpot edges on standard output:
-     `python translate_cdm_to_streamspot.py --url avro/infoleak_small_units.CDM12.avro
-      --format avro --source file`
+     `python translate_cdm_to_streamspot.py --url avro/infoleak_small_units.CDM13.avro --format avro --source file`
 
    * Convert CDM/JSON from Kafka to StreamSpot edges on standard output:
      `python translate_cdm_to_streamspot.py --url <kafka-zookeeper-url>

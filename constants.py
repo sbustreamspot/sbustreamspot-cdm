@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-# Based on CDM 12
-# Schema: https://git.tc.bbn.com/bbn/ta3-serialization-schema/blob/master/avro/CDM12.avdl
+# Based on CDM 13
+# Schema: https://git.tc.bbn.com/bbn/ta3-serialization-schema/blob/master/avro/CDM13.avdl
 SCHEMA_FILE = 'schema/TCCDMDatum.avsc'
 
 # CDM record type constants
@@ -12,6 +12,7 @@ CDM_TYPE_MEM = 'com.bbn.tc.schema.avro.MemoryObject'
 CDM_TYPE_SOCK = 'com.bbn.tc.schema.avro.NetFlowObject'
 CDM_TYPE_EDGE = 'com.bbn.tc.schema.avro.SimpleEdge'
 CDM_TYPE_EVENT = 'com.bbn.tc.schema.avro.Event'
+CDM_TYPE_SRCSINK = 'com.bbn.tc.schema.avro.SrcSinkObject'
 
 type_map = {
     # SubjectType
@@ -24,6 +25,7 @@ type_map = {
     'OBJECT_FILE': 'e',
     'OBJECT_MEM': 'f',
     'OBJECT_SOCK': 'g',
+    'OBJECT_SRCSINK': 'O', # Added CDM13
 
     # EventType
     'EVENT_ACCEPT': 'h',

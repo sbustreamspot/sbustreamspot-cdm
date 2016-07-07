@@ -8,7 +8,7 @@
     "type" : {
       "type" : "fixed",
       "name" : "UUID",
-      "size" : 32
+      "size" : 16
     },
     "doc" : "A unique ID for the entity"
   }, {
@@ -60,6 +60,11 @@
       } ]
     },
     "doc" : "The provenance tag"
+  }, {
+    "name" : "timestampMicros",
+    "type" : [ "null", "long" ],
+    "doc" : "* The timestamp when the tag was created (Optional).\n        * A timestamp stores the number of microseconds from the unix epoch, 1 January 1970 00:00:00.000000 UTC.",
+    "default" : null
   }, {
     "name" : "properties",
     "type" : [ "null", {
