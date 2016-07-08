@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Kafka stuff
+KAFKA_URL = 'ta3.tc.dev:9092'
+
 # Based on CDM 13
 # Schema: https://git.tc.bbn.com/bbn/ta3-serialization-schema/blob/master/avro/CDM13.avdl
 SCHEMA_FILE = 'schema/TCCDMDatum.avsc'

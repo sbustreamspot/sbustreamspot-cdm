@@ -2,12 +2,19 @@
 
 import argparse
 import json
+import logging.config
 import pdb
+from pykafka import KafkaClient
+from pykafka.exceptions import OffsetOutOfRangeError, RequestTimedOut
+from pykafka.partitioners import HashingPartitioner
 import sys
 from tc.schema.serialization import Utils
 from tc.schema.records.parsing import CDMParser
 from tc.schema.serialization.kafka import KafkaAvroGenericDeserializer
 from constants import *
+
+logging.config.fileConfig('conf/logging.conf')
+logger = logging.getLogger('tc')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--url', help='Input filename or Kafka URL', required=True)
@@ -17,6 +24,9 @@ parser.add_argument('--source', help='Consume from Kafka or a file',
                     choices=['kafka', 'file'], required=True)
 parser.add_argument('--concise', help='Single-byte types, needed by StreamSpot',
                     required=False, action='store_true')
+parser.add_argument('--kafka-topic', help='Kafka topic to consume from',
+                    required=False)
+parser.add_argument('--kafka-group', help='Kafka consumer group', required=False)
 args = vars(parser.parse_args())
 
 input_url = args['url']
@@ -77,33 +87,63 @@ streamspot_edge = {'event_uuid': None,
                    'graph_id': None
                   } # filled/cleared on every new event
 
-# start parsing the file
-if input_source == 'file':
-    with open(input_url, 'r') as ifile:
+# setup input source and format
+if input_source == 'kafka':
+    if not input_format == 'avro':
+        print 'Input format must be Avro for Kafka source'
+        sys.exit(-1)
+    if args['kafka_topic'] is None:
+        print 'Argument --kafka-topic is required'
+        sys.exit(-1)
+    if args['kafka_group'] is None:
+        print 'Argument --kafka-group is required'
+        sys.exit(-1)
 
-        # get records from file based on whether the format is json or avro
-        if input_format == 'avro':
-            schema = Utils.load_schema(SCHEMA_FILE)
-            deserializer = KafkaAvroGenericDeserializer(schema, input_file=ifile)
-            parser = CDMParser(schema)
-            f = deserializer.deserialize_from_file()
-        elif input_format == 'json':
-            f = ifile
+    kafka_client = KafkaClient(input_url)
+    kafka_topic = kafka_client.topics[args['kafka_topic']]
+    consumer = kafka_topic.get_balanced_consumer(
+                consumer_group=args['kafka_group'], auto_commit_enable=True,
+                auto_commit_interval_ms=1000, reset_offset_on_start=False,
+                consumer_timeout_ms=100, fetch_wait_max_ms=0, managed=True)
+    
+    schema = Utils.load_schema(SCHEMA_FILE)
+    deserializer = KafkaAvroGenericDeserializer(schema, schema)
+    parser = CDMParser(schema)
+    
+    f = consumer
+elif input_source == 'file':
+    if input_format == 'avro':
+        ifile = open(input_url, 'rb')
+        schema = Utils.load_schema(SCHEMA_FILE)
+        deserializer = KafkaAvroGenericDeserializer(schema, input_file=ifile)
+        parser = CDMParser(schema)
+        f = deserializer.deserialize_from_file()
+    elif input_format == 'json':
+        f = open(input_url, 'r')
 
-        lineno = 0
-        # process records
+# process records
+lineno = 0
+while True:
+    try:
         for line in f:
-            lineno += 1
-            if input_format == 'avro':
-                cdm_record = line
-                cdm_record_type = 'com.bbn.tc.schema.avro.' +\
-                                   parser.get_record_type(cdm_record)
-                cdm_record_values = cdm_record['datum']
-            elif input_format == 'json':
+            if input_format == 'json':
                 cdm_record = json.loads(line.strip())
                 cdm_record_type = cdm_record['datum'].keys()[0]
                 cdm_record_values = cdm_record['datum'][cdm_record_type]
+            elif input_format == 'avro':
+                if input_source == 'kafka':
+                    if line.value is None:
+                        continue
+                    cdm_record = deserializer.deserialize(args['kafka_topic'],
+                                                          line.value)
+                elif input_source == 'file':
+                    cdm_record = line
 
+                cdm_record_type = 'com.bbn.tc.schema.avro.' +\
+                                   parser.get_record_type(cdm_record)
+                cdm_record_values = cdm_record['datum']
+
+            lineno += 1
             #print lineno, cdm_record_type, cdm_record
 
             if cdm_record_type == CDM_TYPE_PRINCIPAL:
@@ -341,7 +381,30 @@ if input_source == 'file':
             else:
                 print 'Unknown CDM record type', cdm_record_type
                 sys.exit(-1)
-
+        # for line in f
 
         # last event in buffer
-        print_streamspot_edge(streamspot_edge, args['concise'])
+        if not None in streamspot_edge.values():
+            print_streamspot_edge(streamspot_edge, args['concise'])
+            streamspot_edge = {'event_uuid': None,
+                               'source_id': None,
+                               'source_name': None,
+                               'source_type': None,
+                               'dest_id': None,
+                               'dest_name': 'NA',
+                               'dest_type': None,
+                               'edge_type': None,
+                               'graph_id': None
+                              }
+
+    except RequestTimedOut:
+        continue # continue waiting 
+    except OffsetOutOfRangeError:
+        continue # ignore error
+    # try
+
+    sys.stdout.flush()
+
+    if input_source == "file":
+        break
+# while True

@@ -9,6 +9,7 @@
    * Access to `git.tc.bbn.com`, to install the TA3 API Python bindings.
    * [graph-tool](https://graph-tool.skewed.de/download) to visualise graphs
      (optional).
+   * `tc-in-a-box` to read/write from Kafka.
    * The usual Python dev-tools: `python2.7`, `virtualenv`, `pip`
 
 ## Quickstart
@@ -38,21 +39,44 @@ pip install git+https://git.tc.bbn.com/bbn/ta3-api-bindings-python.git
    * Convert CDM/Avro in a file to StreamSpot edges on standard output:
      `python translate_cdm_to_streamspot.py --url avro/infoleak_small_units.CDM13.avro --format avro --source file`
 
-   * Convert CDM/JSON from Kafka to StreamSpot edges on standard output:
-     `python translate_cdm_to_streamspot.py --url <kafka-zookeeper-url>
-      --format json --source kafka`
-
    * Convert CDM/Avro from Kafka to StreamSpot edges on standard output:
      `python translate_cdm_to_streamspot.py --url <kafka-zookeeper-url>
-      --format avro --source kafka`
+      --format avro --source kafka --kafka-topic topic --kafka-group group`
+
+   * Visualise Streamspot graphs:
+     `python visualise_streamspot_graph.py -i streamspot/infoleak_small_units.ss`
 
 The [translation mechanism](/TRANSLATION.md) proceeds according to carefully chosen
 heuristics.
 
-### StreamSpot Graph Visualisation
+## Convert `.avdl` to `.avsc`
 
+Avro parsing libraries require schemas in the `.avsc` format.
+Conversion to `.avsc` can be done using `avro-tools` as follows:
+```
+wget http://apache.claz.org/avro/stable/java/avro-tools-1.8.1.jar
+cd schema/
+java -jar ../avro-tools-1.8.1.jar idl2schemata CDM13.avdl
+cd ..
+```
 
-`python visualise_streamspot_graph.py -i streamspot/infoleak_small_units.ss`
+## Setup tc-in-a-box
+
+```
+git clone git@git.tc.bbn.com:bbn/tc-in-a-box.git
+cd tc-in-a-box
+./pre-vagrant.sh
+vagrant up ta3
+```
+
+Test StreamSpot's producer/consumer:
+`python test_kafka_vm.py --kafka-group $(date +'%s')`
+
+Test StreamSpot's CDM translator:
+```
+python translate_cdm_to_streamspot.py --url ta3.tc.dev:9092 --format avro --source kafka --kafka-topic test --kafka-group test
+python test_kafka_vm.py --kafka-group test --only-produce
+```
 
 ### Convert `.avdl` to `.avsc`
 
