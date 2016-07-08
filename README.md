@@ -39,13 +39,9 @@ pip install git+https://git.tc.bbn.com/bbn/ta3-api-bindings-python.git
    * Convert CDM/Avro in a file to StreamSpot edges on standard output:
      `python translate_cdm_to_streamspot.py --url avro/infoleak_small_units.CDM13.avro --format avro --source file`
 
-   * Convert CDM/JSON from Kafka to StreamSpot edges on standard output:
-     `python translate_cdm_to_streamspot.py --url <kafka-zookeeper-url>
-      --format json --source kafka`
-
    * Convert CDM/Avro from Kafka to StreamSpot edges on standard output:
      `python translate_cdm_to_streamspot.py --url <kafka-zookeeper-url>
-      --format avro --source kafka`
+      --format avro --source kafka --kafka-topic topic --kafka-group group`
 
    * Visualise Streamspot graphs:
      `python visualise_streamspot_graph.py -i streamspot/infoleak_small_units.ss`
@@ -75,6 +71,12 @@ vagrant up ta3
 
 Test StreamSpot's producer/consumer:
 `python test_kafka_vm.py --kafka-group $(date +'%s')`
+
+Test StreamSpot's CDM translator:
+```
+python translate_cdm_to_streamspot.py --url ta3.tc.dev:9092 --format avro --source kafka --kafka-topic test --kafka-group test
+python test_kafka_vm.py --kafka-group test --only-produce
+```
 
 ## Contact
 

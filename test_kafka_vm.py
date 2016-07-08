@@ -13,13 +13,11 @@ from tc.schema.serialization import Utils
 from tc.schema.serialization.kafka import KafkaAvroGenericSerializer, KafkaAvroGenericDeserializer
 
 logging.config.fileConfig('conf/logging.conf')
-logger = logging.getLogger("tc")
+logger = logging.getLogger('tc')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--kafka-group', help='Kafka consumer group', required=True) 
 parser.add_argument('--only-produce', help='Only produce messages',
-                     required=False, action='store_true')
-parser.add_argument('--only-consume', help='Only produce messages',
                      required=False, action='store_true')
 args = vars(parser.parse_args())
 
