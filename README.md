@@ -78,6 +78,17 @@ python translate_cdm_to_streamspot.py --url ta3.tc.dev:9092 --format avro --sour
 python test_kafka_vm.py --kafka-group test --only-produce
 ```
 
+### Convert `.avdl` to `.avsc`
+
+Avro parsing libraries require schemas in the `.avsc` format.
+Conversion to `.avsc` can be done using `avro-tools` as follows:
+```
+wget http://apache.claz.org/avro/stable/java/avro-tools-1.8.1.jar
+cd schema/
+java -jar ../avro-tools-1.8.1.jar idl2schemata CDM13.avdl
+cd ..
+```
+
 ## Contact
 
    * emanzoor@cs.stonybrook.edu
