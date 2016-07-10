@@ -4,4 +4,3 @@ greenlet==0.4.10
 kazoo==2.2.1
 pykafka==2.4.0
 tabulate==0.7.5
-tc-bbn-py==13.20160701.0
