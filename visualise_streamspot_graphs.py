@@ -75,11 +75,11 @@ with open(input_file, 'r') as f:
         edge_type = fields[6]
         graph_id = int(fields[7])
 
-        if edge_type == 'EVENT_UNIT':
-            continue
+        #if edge_type == 'EVENT_UNIT':
+        #    continue
 
-        if edge_type == 'EVENT_EXECUTE':
-            continue # do not add this edge: it's a self-loop
+        #if edge_type == 'EVENT_EXECUTE':
+        #    continue # do not add this edge: it's a self-loop
 
         if not graph_id in graphs:
             graphs[graph_id] = create_new_graph()
@@ -122,6 +122,7 @@ with open(input_file, 'r') as f:
             
             if dest_type == 'SUBJECT_PROCESS':
                 g.vp.color[v] = process_color
+                g.vp.label[v] = dest_id + '/' + dest_name
             elif dest_type == 'OBJECT_FILE':
                 g.vp.color[v] = file_color
                 g.vp.label[v] = dest_name.split('/')[-1]

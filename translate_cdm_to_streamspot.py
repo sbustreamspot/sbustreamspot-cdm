@@ -46,6 +46,9 @@ filename_to_dest_id = {}
 current_dest_id = 0
 
 def print_streamspot_edge(streamspot_edge, concise):
+    # HACK: Don't print self-loop edges
+    if concise and streamspot_edge['source_id'] == streamspot_edge['dest_id']:
+        return
     if not concise:
         print str(streamspot_edge['source_id']) + '\t' +\
               str(streamspot_edge['source_name']) + '\t' +\
