@@ -2,7 +2,6 @@
 
 import argparse
 import json
-import logging.config
 import pdb
 from pykafka import KafkaClient
 from pykafka.exceptions import OffsetOutOfRangeError, RequestTimedOut
@@ -12,9 +11,6 @@ from tc.schema.serialization import Utils
 from tc.schema.records.parsing import CDMParser
 from tc.schema.serialization.kafka import KafkaAvroGenericDeserializer
 from constants import *
-
-logging.config.fileConfig('conf/logging.conf')
-logger = logging.getLogger('tc')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--url', help='Input filename or Kafka URL', required=True)

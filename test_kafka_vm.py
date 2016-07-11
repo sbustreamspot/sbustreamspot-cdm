@@ -3,7 +3,6 @@
 import argparse
 from constants import *
 import json
-import logging.config
 import pdb
 from pykafka import KafkaClient
 from pykafka.exceptions import OffsetOutOfRangeError, RequestTimedOut
@@ -11,9 +10,6 @@ from pykafka.partitioners import HashingPartitioner
 import sys
 from tc.schema.serialization import Utils
 from tc.schema.serialization.kafka import KafkaAvroGenericSerializer, KafkaAvroGenericDeserializer
-
-logging.config.fileConfig('conf/logging.conf')
-logger = logging.getLogger('tc')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--kafka-group', help='Kafka consumer group', required=True) 
