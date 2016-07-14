@@ -29,17 +29,7 @@ input_url = args['url']
 input_source = args['source']
 input_format = args['format']
 
-uuid_to_pid = {}
-uuid_to_pname = {}
-uuid_to_url = {}
-uuid_to_sockid = {}
-uuid_to_addr = {}
-
 pid_to_graph_id = {}
-current_graph_id = 0
-
-filename_to_dest_id = {}
-current_dest_id = 0
 
 def print_streamspot_edge(streamspot_edge, concise):
     # HACK: Don't print self-loop edges
@@ -150,15 +140,10 @@ while True:
 
             elif cdm_record_type == CDM_TYPE_SRCSINK:
                 # treat this like a file with filename UUID
-                uuid = read_field(cdm_record_values['uuid'], input_format)
-
-                if not uuid in filename_to_dest_id:
-                    filename_to_dest_id[uuid] = current_dest_id
-                    while current_dest_id in filename_to_dest_id.values():
-                        current_dest_id += 1
+                srcsink_uuid = read_field(cdm_record_values['uuid'], input_format)
 
             elif cdm_record_type == CDM_TYPE_SUBJECT:
-                uuid = read_field(cdm_record_values['uuid'], input_format)
+                proc_uuid = read_field(cdm_record_values['uuid'], input_format)
                 subject_type = read_field(cdm_record_values['type'], input_format)
                 if subject_type == 'SUBJECT_PROCESS':
                     pid = read_field(cdm_record_values['pid'], input_format)
@@ -174,32 +159,18 @@ while True:
                         unitid = read_field(cdm_record_values['unitId']['int'],
                                            input_format)
 
-                    #uuid_to_pid[uuid] = str(pid) + '/' + pname + '/' + str(unitid)
-                    uuid_to_pid[uuid] = pid
-                    uuid_to_pname[uuid] = pname
-                    if not pid in pid_to_graph_id: # pid has no gid assigned
-                        if not ppid in pid_to_graph_id: # ppid has no gid assigned
-                            pid_to_graph_id[pid] = current_graph_id
-                            pid_to_graph_id[ppid] = current_graph_id
-                            current_graph_id += 1
-                        else: # parent has a gid assigned
-                            pid_to_graph_id[pid] = pid_to_graph_id[ppid]
+                    if not proc_uuid in pid_to_graph_id:
+                        pid_to_graph_id[proc_uuid] = proc_uuid
                 else:
                     print "Unknown subject type:", subject_type
                     sys.exit(-1)
 
             elif cdm_record_type == CDM_TYPE_FILE:
-                uuid = read_field(cdm_record_values['uuid'], input_format)
+                file_uuid = read_field(cdm_record_values['uuid'], input_format)
                 url = read_field(cdm_record_values['url'], input_format)
-                uuid_to_url[uuid] = url
-
-                if not url in filename_to_dest_id:
-                    filename_to_dest_id[url] = current_dest_id
-                    while current_dest_id in filename_to_dest_id.values():
-                        current_dest_id += 1
 
             elif cdm_record_type == CDM_TYPE_SOCK:
-                uuid = read_field(cdm_record_values['uuid'], input_format)
+                sock_uuid = read_field(cdm_record_values['uuid'], input_format)
 
                 src = read_field(cdm_record_values['srcAddress'], input_format)
                 dest = read_field(cdm_record_values['destAddress'], input_format)
@@ -207,17 +178,9 @@ while True:
                 dest_port = read_field(cdm_record_values['destPort'], input_format)
                 sock_id = src + ':' + str(src_port) + ':' + dest + ':' + str(dest_port)
 
-                if not sock_id in filename_to_dest_id:
-                    filename_to_dest_id[sock_id] = current_dest_id
-                    while current_dest_id in filename_to_dest_id.values():
-                        current_dest_id += 1
-
-                uuid_to_sockid[uuid] = sock_id
-
             elif cdm_record_type == CDM_TYPE_MEM:
-                uuid = read_field(cdm_record_values['uuid'], input_format)
+                mem_uuid = read_field(cdm_record_values['uuid'], input_format)
                 addr = read_field(cdm_record_values['memoryAddress'], input_format)
-                uuid_to_addr[uuid] = addr
 
             elif cdm_record_type == CDM_TYPE_EVENT:
                 # print previous streamspot edge if it is ready
@@ -236,10 +199,10 @@ while True:
                                        'graph_id': None
                                       }
 
-                uuid = read_field(cdm_record_values['uuid'], input_format)
+                event_uuid = read_field(cdm_record_values['uuid'], input_format)
                 event_type = read_field(cdm_record_values['type'], input_format)
                 streamspot_edge['edge_type'] = event_type
-                streamspot_edge['event_uuid'] = uuid        # to map metadata
+                streamspot_edge['event_uuid'] = event_uuid        # to map metadata
 
             elif cdm_record_type == CDM_TYPE_EDGE:
                 edge_type = read_field(cdm_record_values['type'], input_format)
@@ -254,112 +217,102 @@ while True:
                     #   - EVENT_RENAME
                     if streamspot_edge['edge_type'] == 'EVENT_UPDATE' or \
                        streamspot_edge['edge_type'] == 'EVENT_RENAME':
+
+                        # to_uuid is of the event
                         assert read_field(cdm_record_values['toUuid'],
                                          input_format) == \
                                 streamspot_edge['event_uuid']
+
+                        # from_uuid is of the file
                         from_uuid = read_field(cdm_record_values['fromUuid'],
                                               input_format)
-                        url = uuid_to_url[from_uuid]
-                        dest_id = filename_to_dest_id[url]
 
-                        streamspot_edge['dest_id'] = dest_id
+                        streamspot_edge['dest_id'] = from_uuid
                         streamspot_edge['dest_name'] = url
                         streamspot_edge['dest_type'] = 'OBJECT_FILE'
                     else:
+
+                        # from_uuid is of the event
                         assert read_field(cdm_record_values['fromUuid'],
                                          input_format) == \
                                 streamspot_edge['event_uuid']
+
+                        # to_uuid is of the file
                         to_uuid = read_field(cdm_record_values['toUuid'],
                                             input_format)
-                        url = uuid_to_url[to_uuid]
-                        dest_id = filename_to_dest_id[url]
 
-                        streamspot_edge['dest_id'] = dest_id
+                        streamspot_edge['dest_id'] = to_uuid
                         streamspot_edge['dest_name'] = url
                         streamspot_edge['dest_type'] = 'OBJECT_FILE'
                 elif edge_type == 'EDGE_EVENT_AFFECTS_FILE':
+
+                    # from_uuid is of the event
                     assert read_field(cdm_record_values['fromUuid'],
                                      input_format) ==\
                            streamspot_edge['event_uuid']
 
+                    # to_uuid is of the file
                     to_uuid = read_field(cdm_record_values['toUuid'], input_format)
-                    url = uuid_to_url[to_uuid]
-                    dest_id = filename_to_dest_id[url]
 
-                    streamspot_edge['dest_id'] = dest_id
+                    streamspot_edge['dest_id'] = to_uuid
                     streamspot_edge['dest_name'] = url
                     streamspot_edge['dest_type'] = 'OBJECT_FILE'
-                elif edge_type == 'EDGE_MEMORY_AFFECTS_EVENT':
+                elif edge_type == 'EDGE_MEMORY_AFFECTS_EVENT' or \
+                        edge_type == 'EDGE_EVENT_AFFECTS_MEMORY':
+
+                    # from_uuid is of the event
                     assert read_field(cdm_record_values['fromUuid'],
                                      input_format) ==\
                            streamspot_edge['event_uuid']
 
+                    # to_uuid is of the memory location
                     to_uuid = read_field(cdm_record_values['toUuid'], input_format)
-                    addr = uuid_to_addr[to_uuid]
-                    streamspot_edge['dest_id'] = addr
-                    streamspot_edge['dest_name'] = addr
-                    streamspot_edge['dest_type'] = 'OBJECT_MEM'
-                elif edge_type == 'EDGE_EVENT_AFFECTS_MEMORY':
-                    assert read_field(cdm_record_values['fromUuid'],
-                                     input_format) ==\
-                           streamspot_edge['event_uuid']
-
-                    to_uuid = read_field(cdm_record_values['toUuid'], input_format)
-                    addr = uuid_to_addr[to_uuid]
-                    streamspot_edge['dest_id'] = addr
+                    streamspot_edge['dest_id'] = to_uuid
                     streamspot_edge['dest_name'] = addr
                     streamspot_edge['dest_type'] = 'OBJECT_MEM'
                 elif edge_type == 'EDGE_EVENT_AFFECTS_NETFLOW':
+
+                    # from_uuid is of the event
                     assert read_field(cdm_record_values['fromUuid'],
                                     input_format) ==\
                            streamspot_edge['event_uuid']
 
+                    # to_uuid is of the socket
                     to_uuid = read_field(cdm_record_values['toUuid'], input_format)
-                    sock_id = uuid_to_sockid[to_uuid]
-                    dest_id = filename_to_dest_id[sock_id]
-
-                    streamspot_edge['dest_id'] = dest_id
+                    streamspot_edge['dest_id'] = to_uuid
                     streamspot_edge['dest_name'] = sock_id
                     streamspot_edge['dest_type'] = 'OBJECT_SOCK'
-                elif edge_type == 'EDGE_EVENT_AFFECTS_SRCSINK':
+                elif edge_type == 'EDGE_EVENT_AFFECTS_SRCSINK' or \
+                        edge_type == 'EDGE_SRCSINK_AFFECTS_EVENT':
+
+                    # from_uuid is of the event
                     assert read_field(cdm_record_values['fromUuid'],
                                     input_format) ==\
                            streamspot_edge['event_uuid']
 
+                    # to_uuid is of the source-sink
                     to_uuid = read_field(cdm_record_values['toUuid'], input_format)
-                    dest_id = filename_to_dest_id[to_uuid]
-
-                    streamspot_edge['dest_id'] = dest_id
-                    streamspot_edge['dest_name'] = dest_id
-                    streamspot_edge['dest_type'] = 'OBJECT_SRCSINK'
-                elif edge_type == 'EDGE_SRCSINK_AFFECTS_EVENT':
-                    assert read_field(cdm_record_values['fromUuid'],
-                                    input_format) ==\
-                           streamspot_edge['event_uuid']
-
-                    to_uuid = read_field(cdm_record_values['toUuid'], input_format)
-                    dest_id = filename_to_dest_id[to_uuid]
-
-                    streamspot_edge['dest_id'] = dest_id
-                    streamspot_edge['dest_name'] = dest_id
+                    streamspot_edge['dest_id'] = to_uuid
+                    streamspot_edge['dest_name'] = to_uuid
                     streamspot_edge['dest_type'] = 'OBJECT_SRCSINK'
                 elif edge_type == 'EDGE_EVENT_AFFECTS_SUBJECT' or \
                         edge_type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
+
+                    # from_uuid is of the event
                     assert read_field(cdm_record_values['fromUuid'],
                                      input_format) ==\
                            streamspot_edge['event_uuid']
 
+                    # to_uuid is of the subject
                     to_uuid = read_field(cdm_record_values['toUuid'], input_format)
-                    pid = uuid_to_pid[to_uuid]
-                    pname = uuid_to_pname[to_uuid]
 
                     if edge_type == 'EDGE_EVENT_AFFECTS_SUBJECT':
-                        streamspot_edge['dest_id'] = pid
-                        streamspot_edge['dest_name'] = pname
+                        streamspot_edge['dest_id'] = to_uuid
+                        streamspot_edge['dest_name'] = 'NA'
                         streamspot_edge['dest_type'] = 'SUBJECT_PROCESS'
                     elif edge_type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
-                        streamspot_edge['source_id'] = pid
-                        streamspot_edge['source_name'] = pname
+                        streamspot_edge['source_id'] = to_uuid
+                        streamspot_edge['source_name'] = 'NA'
                         streamspot_edge['source_type'] = 'SUBJECT_PROCESS'
 
                     # graph ID assignment to streamspot edge
@@ -367,11 +320,16 @@ while True:
                         streamspot_edge['graph_id'] = \
                                 pid_to_graph_id[streamspot_edge['source_id']]
 
+                        # handle graph ID propagate on FORK/CLONE and UNIT
+                        if streamspot_edge['edge_type'] == 'EVENT_FORK' or \
+                           streamspot_edge['edge_type'] == 'EVENT_CLONE' or \
+                           streamspot_edge['edge_type'] == 'EVENT_UNIT':
+                            pid_to_graph_id[streamspot_edge['dest_id']] = \
+                                    pid_to_graph_id[streamspot_edge['source_id']]
+
                         # handle graph ID change on EXECUTE
-                        if streamspot_edge['edge_type'] == 'EVENT_EXECUTE':
-                            pid_to_graph_id[streamspot_edge['source_id']] = \
-                                    current_graph_id # change graph ID of caller process
-                            current_graph_id += 1
+                        elif streamspot_edge['edge_type'] == 'EVENT_EXECUTE':
+                            pass # just don't propagate the graph id
 
                 else:
                     print 'Unknown edge type:', edge_type

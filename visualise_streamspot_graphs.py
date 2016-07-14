@@ -73,7 +73,7 @@ with open(input_file, 'r') as f:
         dest_name = fields[4]
         dest_type = fields[5]
         edge_type = fields[6]
-        graph_id = int(fields[7])
+        graph_id = fields[7]
 
         #if edge_type == 'EVENT_UNIT':
         #    continue
