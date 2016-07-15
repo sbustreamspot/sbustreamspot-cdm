@@ -270,7 +270,8 @@ while True:
                     streamspot_edge['dest_id'] = to_uuid
                     streamspot_edge['dest_name'] = addr
                     streamspot_edge['dest_type'] = 'OBJECT_MEM'
-                elif edge_type == 'EDGE_EVENT_AFFECTS_NETFLOW':
+                elif edge_type == 'EDGE_EVENT_AFFECTS_NETFLOW' or \
+                        edge_type == 'EDGE_NETFLOW_AFFECTS_EVENT':
 
                     # from_uuid is of the event
                     assert read_field(cdm_record_values['fromUuid'],
@@ -333,6 +334,7 @@ while True:
 
                 else:
                     print 'Unknown edge type:', edge_type
+                    print cdm_record
                     sys.exit(-1)
 
             else:
