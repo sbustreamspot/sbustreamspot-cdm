@@ -10,10 +10,14 @@ from pykafka.partitioners import HashingPartitioner
 import sys
 from tc.schema.serialization import Utils
 from tc.schema.serialization.kafka import KafkaAvroGenericSerializer, KafkaAvroGenericDeserializer
+from tc.schema.serialization import AvroBytes, AvroFixed
+import uuid
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--kafka-group', help='Kafka consumer group', required=True) 
 parser.add_argument('--only-produce', help='Only produce messages',
+                     required=False, action='store_true')
+parser.add_argument('--test-data', help='Transform UUIDs for test data',
                      required=False, action='store_true')
 args = vars(parser.parse_args())
 
@@ -22,6 +26,8 @@ kafka_topic = kafka_client.topics[args['kafka_group']]
 producer = kafka_topic.get_producer(
             partitioner=HashingPartitioner(),
             sync=True, linger_ms=1, ack_timeout_ms=30000, max_retries=0)
+
+uuidmap = {}
 
 schema = Utils.load_schema(SCHEMA_FILE)
 input_file = open('avro/infoleak_small_units.CDM13.avro', 'rb')
@@ -34,6 +40,19 @@ produced = []
 for edge in records:
     #kafka_key = str(i).encode() # this is hashed to select a partition
     kafka_key = '0'
+
+    if args['test_data']:
+        for uuidfield in ['uuid', 'fromUuid', 'toUuid']:
+            if uuidfield in edge['datum']:
+                if str(edge['datum'][uuidfield]) not in uuidmap:
+                    uuidmap[str(edge['datum'][uuidfield])] = uuid.uuid1().int
+
+                size = 16
+                f = AvroFixed(size)
+                max_by_size = (0x100 ** size) - 1
+                f.set_by_value(uuidmap[str(edge['datum'][uuidfield])])
+
+                edge['datum'][uuidfield] = f
 
     produced.append(edge)
     message = serializer.serialize(args['kafka_group'], edge)
