@@ -29,6 +29,7 @@ type_map = {
     'OBJECT_MEM': 'f',
     'OBJECT_SOCK': 'g',
     'OBJECT_SRCSINK': 'O', # Added CDM13
+    'OBJECT_REGISTRYKEY': 'P', # Added CDM13
 
     # EventType
     'EVENT_ACCEPT': 'h',
@@ -64,4 +65,24 @@ type_map = {
     'EVENT_BLIND': 'L',
     'EVENT_UNIT': 'M',
     'EVENT_UPDATE': 'N',
+    'EVENT_SENDTO': 'Q', # CDM13
+    'EVENT_SENDMSG': 'R', # CDM13
+    'EVENT_SHM': 'S', # CDM13
+    'EVENT_EXIT': 'T' # CDM13
 }
+
+IGNORED_EDGES = set(['EDGE_SUBJECT_HASLOCALPRINCIPAL',
+                     'EDGE_EVENT_HASPARENT_EVENT',
+                     'EDGE_EVENT_CAUSES_EVENT',
+                     'EDGE_SUBJECT_HASPARENT_SUBJECT',
+                     'EDGE_SUBJECT_HASPRINCIPAL',
+                     'EDGE_SUBJECT_HASLOCALPRINCIPAL',
+                     'EDGE_SUBJECT_RUNSON',
+                     'EDGE_OBJECT_PREV_VERSION',
+                     'EDGE_FILE_HAS_TAG',
+                     'EDGE_REGISTRYKEY_HAS_TAG',
+                     'EDGE_NETFLOW_HAS_TAG',
+                     'EDGE_MEMORY_HAS_TAG',
+                     'EDGE_SRCSINK_HAS_TAG',
+                     'EDGE_SUBJECT_HAS_TAG',
+                     'EDGE_EVENT_HAS_TAG'])
