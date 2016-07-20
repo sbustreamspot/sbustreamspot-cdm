@@ -265,41 +265,35 @@ while True:
                     streamspot_edge['dest_id'] = object_uuid
                     streamspot_edge['dest_name'] = object_uuid
                     streamspot_edge['dest_type'] = 'OBJECT_REGISTRYKEY'
-                elif edge_type == 'EDGE_EVENT_AFFECTS_SUBJECT' or \
-                        edge_type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
-
-                    if streamspot_edge['edge_type'] == 'EVENT_UNIT':
-                        # UNIT edges are reversed for some reason
-                        if edge_type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
-                            streamspot_edge['dest_id'] = object_uuid
-                            streamspot_edge['dest_name'] = 'NA'
-                            streamspot_edge['dest_type'] = 'SUBJECT_PROCESS'
-                        elif edge_type == 'EDGE_EVENT_AFFECTS_SUBJECT':
-                            streamspot_edge['source_id'] = object_uuid
-                            streamspot_edge['source_name'] = 'NA'
-                            streamspot_edge['source_type'] = 'SUBJECT_PROCESS'
-                    else:
-                        if edge_type == 'EDGE_EVENT_AFFECTS_SUBJECT':
-                            streamspot_edge['dest_id'] = object_uuid
-                            streamspot_edge['dest_name'] = 'NA'
-                            streamspot_edge['dest_type'] = 'SUBJECT_PROCESS'
-                        elif edge_type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
-                            streamspot_edge['source_id'] = object_uuid
-                            streamspot_edge['source_name'] = 'NA'
-                            streamspot_edge['source_type'] = 'SUBJECT_PROCESS'
+                
+                # object_uuid is
+                # - EDGE_EVENT_AFFECTS_SUBJECT / EVENT_UNIT
+                #   uuid of the unit
+                # - EDGE_EVENT_ISGENERATEDBY_SUBJECT / EVENT_UNIT
+                #   uuid of the process
+                # - EDGE_EVENT_AFFECTS_SUBJECT / EVENT_FORK
+                #   uuid of the child process
+                # - EDGE_EVENT_ISGENERATEDBY_SUBJECT / EVENT_FORK
+                #   uuid of the parent process
+                elif edge_type == 'EDGE_EVENT_AFFECTS_SUBJECT':
+                    streamspot_edge['dest_id'] = object_uuid
+                    streamspot_edge['dest_name'] = 'NA'
+                    streamspot_edge['dest_type'] = 'SUBJECT_PROCESS'
+                elif edge_type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
+                    streamspot_edge['source_id'] = object_uuid
+                    streamspot_edge['source_name'] = 'NA'
+                    streamspot_edge['source_type'] = 'SUBJECT_PROCESS'
 
                     # graph ID assignment to streamspot edge
-                    if edge_type == 'EDGE_EVENT_ISGENERATEDBY_SUBJECT':
-                        streamspot_edge['graph_id'] = \
+                    streamspot_edge['graph_id'] = \
+                            pid_to_graph_id[streamspot_edge['source_id']]
+
+                    # handle graph ID propagate on FORK/CLONE and UNIT
+                    if streamspot_edge['edge_type'] == 'EVENT_FORK' or \
+                       streamspot_edge['edge_type'] == 'EVENT_CLONE' or\
+                       streamspot_edge['edge_type'] == 'EVENT_UNIT':
+                        pid_to_graph_id[streamspot_edge['dest_id']] = \
                                 pid_to_graph_id[streamspot_edge['source_id']]
-
-                        # handle graph ID propagate on FORK/CLONE and UNIT
-                        if streamspot_edge['edge_type'] == 'EVENT_FORK' or \
-                           streamspot_edge['edge_type'] == 'EVENT_CLONE' or \
-                           streamspot_edge['edge_type'] == 'EVENT_UNIT':
-                            pid_to_graph_id[streamspot_edge['dest_id']] = \
-                                    pid_to_graph_id[streamspot_edge['source_id']]
-
                 else:
                     print 'Unknown edge type:', edge_type
                     print cdm_record
