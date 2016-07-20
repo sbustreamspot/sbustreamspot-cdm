@@ -14,6 +14,8 @@ from tc.schema.serialization import AvroBytes, AvroFixed
 import uuid
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--input-file', help='Input data in CDM/Avro format',
+                    required=True)
 parser.add_argument('--kafka-group', help='Kafka consumer group', required=True) 
 parser.add_argument('--only-produce', help='Only produce messages',
                      required=False, action='store_true')
@@ -30,7 +32,7 @@ producer = kafka_topic.get_producer(
 uuidmap = {}
 
 schema = Utils.load_schema(SCHEMA_FILE)
-input_file = open('avro/infoleak_small_units.CDM13.avro', 'rb')
+input_file = open(args['input_file'], 'rb')
 serializer = KafkaAvroGenericSerializer(schema)
 deserializer = KafkaAvroGenericDeserializer(schema, input_file=input_file)
 records = deserializer.deserialize_from_file()
