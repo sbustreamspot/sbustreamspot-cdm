@@ -20,6 +20,8 @@ parser.add_argument('--source', help='Consume from Kafka or a file',
                     choices=['kafka', 'file'], required=True)
 parser.add_argument('--concise', help='Single-byte types, needed by StreamSpot',
                     required=False, action='store_true')
+parser.add_argument('--train', help='Training phase',
+                    required=False, action='store_true')
 parser.add_argument('--kafka-topic', help='Kafka topic to consume from',
                     required=False)
 parser.add_argument('--kafka-group', help='Kafka consumer group', required=False)
@@ -113,6 +115,7 @@ elif input_source == 'file':
 
 # process records
 lineno = 0
+trialnum = 0
 while True:
     try:
         for line in f:
@@ -328,4 +331,10 @@ while True:
 
     if input_source == "file":
         break
+
+    if args['train']:
+        if trialnum > 5:
+            print >> sys.stderr, 'Wrote', lineno, 'records of training data'
+            break
+        trialnum += 1
 # while True
