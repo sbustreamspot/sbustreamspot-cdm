@@ -36,7 +36,7 @@ pid_to_graph_id = {}
 def print_streamspot_edge(streamspot_edge, concise):
     # HACK: Don't print self-loop edges
     if concise and streamspot_edge['source_id'] == streamspot_edge['dest_id']:
-        assert streamspot_edge['edge_type'] == 'EVENT_CHANGE_PRINCIPAL'
+        #assert streamspot_edge['edge_type'] == 'EVENT_CHANGE_PRINCIPAL'
         return
     if not concise:
         print str(streamspot_edge['source_id']) + '\t' +\
