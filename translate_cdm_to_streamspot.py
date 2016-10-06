@@ -288,6 +288,11 @@ while True:
                     streamspot_edge['source_type'] = 'SUBJECT_PROCESS'
 
                     # graph ID assignment to streamspot edge
+                    # hack: if graph id doesnt exist for this pid,
+                    # which means the subject never showed up, create
+                    # one on the fly
+                    if not streamspot_edge['source_id'] in pid_to_graph_id:
+                       pid_to_graph_id[streamspot_edge['source_id']] = streamspot_edge['source_id'] 
                     streamspot_edge['graph_id'] = \
                             pid_to_graph_id[streamspot_edge['source_id']]
 
