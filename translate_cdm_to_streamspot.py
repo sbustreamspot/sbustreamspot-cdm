@@ -76,7 +76,7 @@ streamspot_edge = {'event_uuid': None,
                    'dest_name': 'NA',
                    'dest_type': None,
                    'edge_type': None,
-                   'graph_id': None
+                   'graph_id': 'NA'
                   } # filled/cleared on every new event
 
 # setup input source and format
@@ -198,6 +198,18 @@ while True:
             elif cdm_record_type == CDM_TYPE_EVENT:
                 # print previous streamspot edge if it is ready
                 if not None in streamspot_edge.values():
+                    # hack for when a process appears without a subject record
+                    if not streamspot_edge['source_id'] in pid_to_graph_id:
+                       pid_to_graph_id[streamspot_edge['source_id']] = \
+                           streamspot_edge['source_id'] 
+                    streamspot_edge['graph_id'] = pid_to_graph_id[streamspot_edge['source_id']]
+
+                    if streamspot_edge['edge_type'] == 'EVENT_FORK' or \
+                       streamspot_edge['edge_type'] == 'EVENT_CLONE' or\
+                       streamspot_edge['edge_type'] == 'EVENT_UNIT':
+                        pid_to_graph_id[streamspot_edge['dest_id']] = \
+                            pid_to_graph_id[streamspot_edge['source_id']]
+
                     print_streamspot_edge(streamspot_edge, args['concise'])
 
                     # clear old edge data
@@ -209,7 +221,7 @@ while True:
                                        'dest_name': 'NA',
                                        'dest_type': None,
                                        'edge_type': None,
-                                       'graph_id': None
+                                       'graph_id': 'NA'
                                       }
 
                 event_uuid = read_field(cdm_record_values['uuid'], input_format)
@@ -291,17 +303,15 @@ while True:
                     # hack: if graph id doesnt exist for this pid,
                     # which means the subject never showed up, create
                     # one on the fly
-                    if not streamspot_edge['source_id'] in pid_to_graph_id:
-                       pid_to_graph_id[streamspot_edge['source_id']] = streamspot_edge['source_id'] 
-                    streamspot_edge['graph_id'] = \
-                            pid_to_graph_id[streamspot_edge['source_id']]
-
+                    """
                     # handle graph ID propagate on FORK/CLONE and UNIT
                     if streamspot_edge['edge_type'] == 'EVENT_FORK' or \
                        streamspot_edge['edge_type'] == 'EVENT_CLONE' or\
                        streamspot_edge['edge_type'] == 'EVENT_UNIT':
                         pid_to_graph_id[streamspot_edge['dest_id']] = \
                                 pid_to_graph_id[streamspot_edge['source_id']]
+                    """
+                    # do the above when printing the event instead
                 else:
                     print 'Unknown edge type:', edge_type
                     print cdm_record
@@ -323,7 +333,7 @@ while True:
                                'dest_name': 'NA',
                                'dest_type': None,
                                'edge_type': None,
-                               'graph_id': None
+                               'graph_id': 'NA'
                               }
 
     except RequestTimedOut:
