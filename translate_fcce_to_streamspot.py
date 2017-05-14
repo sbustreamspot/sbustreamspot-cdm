@@ -24,52 +24,6 @@ graph = args['graph']
 start_ts = args['start']
 end_ts = args['end']
 
-uuid_to_pid = {}
-uuid_to_pname = {}
-uuid_to_url = {}
-uuid_to_sockid = {}
-uuid_to_addr = {}
-
-pid_to_graph_id = {}
-current_graph_id = 0
-
-filename_to_dest_id = {}
-current_dest_id = 0
-
-def print_streamspot_edge(streamspot_edge, concise):
-    # HACK: Don't print self-loop edges
-    if concise and streamspot_edge['source_id'] == streamspot_edge['dest_id']:
-        return
-    if not concise:
-        print str(streamspot_edge['source_id']) + '\t' +\
-              str(streamspot_edge['source_name']) + '\t' +\
-              str(streamspot_edge['source_type']) + '\t' +\
-              str(streamspot_edge['dest_id']) + '\t' +\
-              str(streamspot_edge['dest_name']) + '\t' +\
-              str(streamspot_edge['dest_type']) + '\t' +\
-              str(streamspot_edge['edge_type']) + '\t' +\
-              str(streamspot_edge['graph_id'])
-    else:
-        print str(streamspot_edge['source_id']) + '\t' +\
-              type_map[streamspot_edge['source_type']] + '\t' +\
-              str(streamspot_edge['dest_id']) + '\t' +\
-              type_map[streamspot_edge['dest_type']] + '\t' +\
-              type_map[streamspot_edge['edge_type']] + '\t' +\
-              str(streamspot_edge['graph_id'])
-
-# initialise empty streamspot edge
-event_metadata_buffer = {} # filled/cleared on every new event
-streamspot_edge = {'event_uuid': None,
-                   'source_id': None,
-                   'source_name': None,
-                   'source_type': None,
-                   'dest_id': None,
-                   'dest_name': 'NA',
-                   'dest_type': None,
-                   'edge_type': None,
-                   'graph_id': None
-                  } # filled/cleared on every new event
-
 try:
     endpoint = 'http://' + url + '/queryeventbytime/' + graph + '/' + start_ts + '/' + end_ts
     response = urllib2.urlopen(endpoint)
@@ -97,7 +51,6 @@ except:
 # Response is a list of entities with fields: subtype, permissions, _directory, path, _filename, type, uuid
 entities = json.loads(response)
 uuid_type_map = {}
-uuid_pid_map = {}
 uuid_gid_map = {}
 current_graph_id = 0
 for entity in entities['entities']:
@@ -105,7 +58,6 @@ for entity in entities['entities']:
     main_type = entity['type']
     if main_type == CDM_TYPE_SUBJECT: 
         uuid_type_map[uuid] = entity['subtype']
-        uuid_pid_map[uuid] = entity['cid']
         uuid_gid_map[uuid] = current_graph_id
         current_graph_id += 1
     elif main_type == CDM_TYPE_FILE:
@@ -142,8 +94,6 @@ for eidx, event in enumerate(events['events']):
     mapped_event_type = type_map[event_type]
     mapped_subject_type = type_map[subject_type]
     mapped_predicate_type = type_map[predicate_type]
-
-    #print subject_type, predicate_type, event_type
 
     print subject_uuid, mapped_subject_type,
     print predicate_uuid, mapped_predicate_type,
