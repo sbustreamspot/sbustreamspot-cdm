@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+python translate_fcce_to_streamspot.py --url ta2-marple-fcce1:8080 --graph cadets-bovia-2 --start 1494302399 --end 1494302399 > test/test.ss

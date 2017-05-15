@@ -81,6 +81,9 @@ for eidx, event in enumerate(events['events']):
     if event_type == 'EVENT_OTHER':
         continue
 
+    if subject_uuid == predicate_uuid: # self loop
+        continue
+
     subject_type = uuid_type_map[subject_uuid]
     predicate_type = uuid_type_map[predicate_uuid]
     gid = uuid_gid_map[subject_uuid]
