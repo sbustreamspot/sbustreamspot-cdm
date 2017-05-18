@@ -4,6 +4,7 @@ import argparse
 import json
 import pdb
 import sys
+import time
 import urllib2
 from constants import *
 
@@ -24,6 +25,8 @@ graph = args['graph']
 start_ts = args['start']
 end_ts = args['end']
 
+t0 = time.time()
+print >> sys.stderr, 'Getting all events',
 try:
     endpoint = 'http://' + url + '/queryeventbytime/' + graph + '/' + start_ts + '/' + end_ts
     response = urllib2.urlopen(endpoint)
@@ -37,33 +40,52 @@ except:
 #    predicate (uuid), type (string), path (string), timeStampNano (long) 
 events = json.loads(response)
 
-# Collect all subject and predicate uuids to get their types
-all_subject_uuids = [e['subject'] for e in events['events']]
-all_predicate_uuids = [e['predicate'] for e in events['events']]
-try:
-    uuid_string = ','.join(all_subject_uuids + all_predicate_uuids)
-    endpoint = 'http://' + url + '/queryelembyuuid/' + graph + '/' + uuid_string
-    response = urllib2.urlopen(endpoint)
-    response = response.read()
-except:
-    print 'Error connecting to endpoint:', endpoint
+print >> sys.stderr, len(events['events']), 'done in %.2fs.' % (time.time() - t0)
 
-# Response is a list of entities with fields: subtype, permissions, _directory, path, _filename, type, uuid
-entities = json.loads(response)
+# Collect all subject and predicate uuids to get their types
+all_subject_uuids = [e['subject'] for e in events['events'] if len(e) > 0]
+all_predicate_uuids = [e['predicate'] for e in events['events'] if len(e) > 0]
+all_uuids = all_subject_uuids + all_predicate_uuids
+
 uuid_type_map = {}
 uuid_gid_map = {}
 current_graph_id = 0
-for entity in entities['entities']:
-    uuid = entity['uuid']
-    main_type = entity['type']
-    if main_type == CDM_TYPE_SUBJECT: 
-        uuid_type_map[uuid] = entity['subtype']
-        uuid_gid_map[uuid] = current_graph_id
-        current_graph_id += 1
-    elif main_type == CDM_TYPE_FILE:
-        uuid_type_map[uuid] = entity['subtype']
-    else:
-        uuid_type_map[uuid] = main_type
+start = 0
+step = 500
+end = start + step
+t0 = time.time()
+print >> sys.stderr, 'Getting all subject/predicate types', len(all_uuids)
+while start < end:
+    print >> sys.stderr, '\tRequest', start, end,
+    t1 = time.time()
+    try:
+        uuid_string = ','.join(all_uuids[start:end])
+        endpoint = 'http://' + url + '/queryelembyuuid/' + graph + '/' + uuid_string
+        response = urllib2.urlopen(endpoint)
+        response = response.read()
+    except:
+        print >> sys.stderr, 'Error connecting to endpoint:', endpoint[:100]
+        sys.exit(-1)
+    print >> sys.stderr, 'done in %.2fs.' % (time.time() - t1)
+
+    #print '\tMapping ids...'
+    # Response is a list of entities with fields: subtype, permissions, _directory, path, _filename, type, uuid
+    entities = json.loads(response)
+    for entity in entities['entities']:
+        uuid = entity['uuid']
+        main_type = entity['type']
+        if main_type == CDM_TYPE_SUBJECT: 
+            uuid_type_map[uuid] = entity['subtype']
+            uuid_gid_map[uuid] = current_graph_id
+            current_graph_id += 1
+        elif main_type == CDM_TYPE_FILE:
+            uuid_type_map[uuid] = entity['subtype']
+        else:
+            uuid_type_map[uuid] = main_type
+
+    start = end
+    end = min(len(all_uuids), start + step)
+print >> sys.stderr, 'done in %.2fs.' % (time.time() - t0)
 
 for eidx, event in enumerate(events['events']):
     #if 'path' in event:
