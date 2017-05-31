@@ -32,7 +32,7 @@ end_ts = args['end']
 t0 = time.time()
 print >> sys.stderr, 'Getting all events'
 start = int(start_ts)
-step = int(1800) # 3 hours
+step = int(86400) # 3 hours
 end = min(start + step, int(end_ts))
 all_events = []
 while start < end:
@@ -197,7 +197,7 @@ for eidx, event in enumerate(sorted(all_events,
 
         print subject_uuid, mapped_subject_type,
         print predicate_uuid, mapped_predicate_type,
-        print mapped_event_type, gid
+        print mapped_event_type, gid, event_uuid, event_ts
     except Exception, e:
         print >> sys.stderr, 'Error writing edges.'
         print >> sys.stderr, event
